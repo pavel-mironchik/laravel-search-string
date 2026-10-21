@@ -1,5 +1,10 @@
 # 🔍 Laravel Search String
 
+> **Libre Accounting fork.** This is [libre-accounting/laravel-search-string](https://github.com/libre-accounting/laravel-search-string), a fork of
+> [lorisleiva/laravel-search-string](https://github.com/lorisleiva/laravel-search-string) 1.3.0 that only widens the Composer constraint so the
+> package installs on Laravel 11, 12 and 13. The `Lorisleiva\LaravelSearchString` namespace and the code are unchanged, and the package
+> `replace`s `lorisleiva/laravel-search-string`.
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/lorisleiva/laravel-search-string.svg)](https://packagist.org/packages/lorisleiva/laravel-search-string)
 [![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/lorisleiva/laravel-search-string/Tests?label=tests)](https://github.com/lorisleiva/laravel-search-string/actions?query=workflow%3ATests+branch%3Anext)
 [![Total Downloads](https://img.shields.io/packagist/dt/lorisleiva/laravel-search-string.svg)](https://packagist.org/packages/lorisleiva/laravel-search-string)
