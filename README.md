@@ -1,3 +1,6 @@
+> Maintained FlashAsia fork: see [native compiler compatibility and provenance](NATIVE-COMPILER.md).
+> Install as `flashasia/laravel-search-string`; the public PHP namespace is unchanged.
+
 # 🔍 Laravel Search String
 
 > **Libre Accounting fork.** This is [libre-accounting/laravel-search-string](https://github.com/libre-accounting/laravel-search-string), a fork of

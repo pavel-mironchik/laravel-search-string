@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="tests/Native/bootstrap.php" colors="true" cacheResult="false">
+    <testsuites><testsuite name="Native"><directory>tests/Native</directory></testsuite></testsuites>
+</phpunit>
