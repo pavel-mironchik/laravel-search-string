@@ -22,15 +22,20 @@ jobs:
     name: Native / PHP ${{ matrix.php }} / Illuminate ${{ matrix.illuminate }}
     env:
       TZ: UTC
-      COMPOSER_HOME: ${{ runner.temp }}/native-composer-home
-      COMPOSER_CACHE_DIR: ${{ runner.temp }}/native-composer-cache
-      CONSUMER: ${{ runner.temp }}/native-consumer
-      SEARCH_STRING_TEST_AUTOLOAD: ${{ runner.temp }}/native-consumer/vendor/autoload.php
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+      - name: Configure isolated paths
+        run: |
+          set -euo pipefail
+          {
+            printf 'COMPOSER_HOME=%s/native-composer-home\n' "$RUNNER_TEMP"
+            printf 'COMPOSER_CACHE_DIR=%s/native-composer-cache\n' "$RUNNER_TEMP"
+            printf 'CONSUMER=%s/native-consumer\n' "$RUNNER_TEMP"
+            printf 'SEARCH_STRING_TEST_AUTOLOAD=%s/native-consumer/vendor/autoload.php\n' "$RUNNER_TEMP"
+          } >> "$GITHUB_ENV"
       - name: Set up PHP and Composer
         uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
         with:

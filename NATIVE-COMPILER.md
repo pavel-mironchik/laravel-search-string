@@ -62,6 +62,10 @@ not an exhaustive proof of all possible grammar inputs. Release gates remain
 independent review, a normal Composer install/audit on the target dependency
 graph, and the consuming application's actual custom-visitor regression suite.
 
+Before publishing workflow changes, run `actionlint .github/workflows/tests.yml`.
+Runner temporary paths are exported by a step because the runner context is not
+available in job-level env expressions.
+
 ## Native component CI
 
 The maintained workflow runs the nine native tests on actual PHP 8.1 with
