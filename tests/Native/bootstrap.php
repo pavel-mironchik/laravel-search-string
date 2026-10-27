@@ -19,3 +19,18 @@ spl_autoload_register(function ($class) {
         require $file;
     }
 }, true, true);
+
+// Component-only CI has no Foundation helpers. Never override a framework helper.
+if (! function_exists('config')) {
+    function config($key = null, $default = null)
+    {
+        $repository = \Illuminate\Container\Container::getInstance()->make('config');
+        if ($key === null) {
+            return $repository;
+        }
+        if (is_array($key)) {
+            return $repository->set($key);
+        }
+        return $repository->get($key, $default);
+    }
+}

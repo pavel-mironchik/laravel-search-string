@@ -61,3 +61,28 @@ Hoa runtime or development dependency. They are bounded regression evidence,
 not an exhaustive proof of all possible grammar inputs. Release gates remain
 independent review, a normal Composer install/audit on the target dependency
 graph, and the consuming application's actual custom-visitor regression suite.
+
+## Native component CI
+
+The maintained workflow runs the nine native tests on actual PHP 8.1 with
+Illuminate 10 components and actual PHP 8.4 with Illuminate 11 components. It
+creates an isolated temporary Composer project with support, database, events,
+config and console components, plus PHPUnit 10.5.63+ or 11.5.50+ respectively.
+The package checkout is loaded directly by the prepended source loader above;
+no synthetic package version or inline package repository is used. A test-only
+config helper supplies Foundation's repository get/set behavior when Foundation
+is absent; an existing framework helper always takes precedence.
+
+Composer 2.10.3 resolves under its normal security policy, with plugins and
+scripts disabled, then audits the resolved graph and checks the actual platform.
+No advisory exceptions are configured. Each job checks PHP syntax and manifests,
+discovers the tests, runs the full native corpus under a 900-second hard timeout,
+and verifies exactly nine JUnit test cases with no failures, errors or skips.
+Dependency manifests, lock files, audit/platform output and JUnit are retained as
+workflow artifacts. Composer home/cache and consumers live under runner.temp.
+
+This component CI proves compiler/SQL parity, including loading checkout source.
+It does not boot the full Laravel framework or test provider/CLI integration;
+those remain separate full-framework consuming-application release gates.
+Local PHP 8.3 execution with a Composer PHP 8.1 platform constraint is dependency
+resolution evidence only for that baseline, not actual PHP 8.1 execution.

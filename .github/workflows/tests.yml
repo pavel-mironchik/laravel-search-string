@@ -1,37 +1,74 @@
-name: Tests
+name: Native component tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
-  tests:
-    runs-on: ${{ matrix.os }}
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        php: ["8.1", "8.2"]
-        laravel: ["^9.0", "^10.0"]
         include:
-          - laravel: "^9.0"
-            testbench: "^7.0"
-          - laravel: "^10.0"
-            testbench: "^8.0"
-    name: Laravel ${{ matrix.laravel }} PHP${{ matrix.php }} on ${{ matrix.os }}
-    container:
-      image: lorisleiva/laravel-docker:${{ matrix.php }}
+          - php: '8.1'
+            platform: '8.1.0'
+            illuminate: '10'
+          - php: '8.4'
+            platform: '8.4.0'
+            illuminate: '11'
+    name: Native / PHP ${{ matrix.php }} / Illuminate ${{ matrix.illuminate }}
+    env:
+      TZ: UTC
+      COMPOSER_HOME: ${{ runner.temp }}/native-composer-home
+      COMPOSER_CACHE_DIR: ${{ runner.temp }}/native-composer-cache
+      CONSUMER: ${{ runner.temp }}/native-consumer
+      SEARCH_STRING_TEST_AUTOLOAD: ${{ runner.temp }}/native-consumer/vendor/autoload.php
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Validate composer files
-        run: composer validate
-      - name: Cache dependencies
-        uses: actions/cache@v1
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          path: /composer/cache/files
-          key: dependencies-laravel-${{ matrix.laravel }}-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
-      - name: Install dependencies
+          persist-credentials: false
+      - name: Set up PHP and Composer
+        uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: bcmath, mbstring, pdo_sqlite, intl
+          ini-values: date.timezone=UTC
+          coverage: none
+          tools: composer:2.10.3@sha256:7a2d379d5b8ffdaa028580ef26494c36d2feef4b178d3dd1473a4dbc5e17c8d6
+        env:
+          fail-fast: true
+      - name: Check source syntax and package manifest
         run: |
-          composer require --prefer-dist --no-progress --no-suggest --no-interaction "illuminate/support:${{ matrix.laravel }}"
-          composer install --prefer-dist --no-progress --no-suggest --no-interaction
-      - name: Run tests
-        run: phpunit
+          set -euo pipefail
+          find src tests/Native -name '*.php' -print0 | xargs -0 -n1 php -l
+          composer validate --strict --no-check-publish
+      - name: Resolve component-only consumer with normal security policy
+        run: |
+          set -euo pipefail
+          php tests/Native/create-consumer.php "$CONSUMER" '${{ matrix.illuminate }}' '${{ matrix.platform }}'
+          composer --working-dir="$CONSUMER" validate --strict
+          composer --working-dir="$CONSUMER" update --no-interaction --prefer-dist --no-progress --no-plugins --no-scripts 2>&1 | tee "$CONSUMER/resolve.log"
+          composer --working-dir="$CONSUMER" audit --format=json > "$CONSUMER/audit.json"
+          composer --working-dir="$CONSUMER" check-platform-reqs | tee "$CONSUMER/platform.log"
+      - name: Discover and run all nine native tests
+        run: |
+          set -euo pipefail
+          php "$CONSUMER/vendor/bin/phpunit" -c phpunit-native.xml --list-tests | tee "$CONSUMER/discovery.log"
+          timeout --signal=TERM --kill-after=10s 900s php "$CONSUMER/vendor/bin/phpunit" -c phpunit-native.xml --log-junit "$CONSUMER/junit.xml" 2>&1 | tee "$CONSUMER/tests.log"
+          php tests/Native/check-junit.php "$CONSUMER/junit.xml"
+      - name: Preserve dependency and test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-php${{ matrix.php }}-illuminate${{ matrix.illuminate }}
+          if-no-files-found: warn
+          path: |
+            ${{ env.CONSUMER }}/composer.json
+            ${{ env.CONSUMER }}/composer.lock
+            ${{ env.CONSUMER }}/*.log
+            ${{ env.CONSUMER }}/audit.json
+            ${{ env.CONSUMER }}/junit.xml
