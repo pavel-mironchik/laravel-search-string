@@ -58,7 +58,7 @@ jobs:
         run: |
           set -euo pipefail
           php "$CONSUMER/vendor/bin/phpunit" -c phpunit-native.xml --list-tests | tee "$CONSUMER/discovery.log"
-          timeout --signal=TERM --kill-after=10s 900s php "$CONSUMER/vendor/bin/phpunit" -c phpunit-native.xml --log-junit "$CONSUMER/junit.xml" 2>&1 | tee "$CONSUMER/tests.log"
+          timeout --signal=TERM --kill-after=10s 900s php "$CONSUMER/vendor/bin/phpunit" -c phpunit-native.xml --fail-on-risky --log-junit "$CONSUMER/junit.xml" 2>&1 | tee "$CONSUMER/tests.log"
           php tests/Native/check-junit.php "$CONSUMER/junit.xml"
       - name: Preserve dependency and test evidence
         if: always()
