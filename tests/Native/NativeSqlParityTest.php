@@ -12,12 +12,13 @@ use PHPUnit\Framework\TestCase;
 
 class NativeSqlParityTest extends TestCase
 {
-    public function strategies(): array
+    public static function strategies(): array
     {
         return [['exceptions'], ['no-results'], ['all-results']];
     }
 
     /** @dataProvider strategies */
+    #[\PHPUnit\Framework\Attributes\DataProvider('strategies')]
     public function testSqlBindingsAndFailureStrategies(string $strategy): void
     {
         $originalContainer = Container::getInstance();
@@ -41,6 +42,25 @@ class NativeSqlParityTest extends TestCase
             $container->instance('db', $db->getDatabaseManager());
             Facade::clearResolvedInstances();
             Facade::setFacadeApplication($container);
+            $db->getConnection()->getSchemaBuilder()->create('products', function ($table) {
+                $table->integer('id');
+                $table->integer('company_id');
+                $table->string('name');
+                $table->string('description');
+                $table->string('email');
+                $table->boolean('paid');
+                $table->dateTime('created_at');
+            });
+            $db->getConnection()->table('products')->insert([
+                ['id' => 1, 'company_id' => 17, 'name' => 'Alpha', 'description' => 'First', 'email' => 'one@example.test', 'paid' => true, 'created_at' => '2026-10-01 12:00:00'],
+                ['id' => 2, 'company_id' => 17, 'name' => 'Beta', 'description' => 'Second', 'email' => 'Alpha@example.test', 'paid' => false, 'created_at' => '2026-10-02 12:00:00'],
+                ['id' => 3, 'company_id' => 17, 'name' => 'Gamma', 'description' => 'Third', 'email' => 'three@example.test', 'paid' => false, 'created_at' => '2026-10-03 12:00:00'],
+                ['id' => 4, 'company_id' => 99, 'name' => 'Alpha', 'description' => 'Outside', 'email' => 'Alpha@example.test', 'paid' => true, 'created_at' => '2026-10-01 12:00:00'],
+            ]);
+            foreach (['Alpha' => [1, 2], 'not Alpha' => [3], 'paid' => [1], 'not paid' => [2, 3], 'created_at:2026-10-01' => [1], 'paid or name:Gamma' => [1, 3], 'not paid and Alpha' => [2]] as $input => $ids) {
+                $query = (new NativeParityProduct())->newQuery()->where('company_id', 17)->usingSearchString($input)->orderBy('id');
+                $this->assertSame($ids, $query->pluck('id')->all(), $input);
+            }
             foreach (json_decode(file_get_contents(__DIR__.'/fixtures/sql.old.json'), true) as $row) {
                 if ($row['strategy'] !== $strategy) {
                     continue;

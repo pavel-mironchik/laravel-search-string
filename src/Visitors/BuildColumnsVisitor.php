@@ -143,7 +143,7 @@ class BuildColumnsVisitor extends Visitor
             return $this->builder->where($where[0], $where[1], $where[2], $this->boolean);
         }
 
-        return $this->builder->where($wheres->toArray(), null, null, $this->boolean);
+        return $this->buildNestedWhereGroup($wheres->toArray());
     }
 
     protected function buildSearchWhereClause(SoloSymbol $solo, $column): array
@@ -219,10 +219,21 @@ class BuildColumnsVisitor extends Visitor
         $column = $rule->qualifyColumn($this->builder);
         $exclude = in_array($query->operator, ['!=', 'not in']);
 
-        return $this->builder->where([
+        return $this->buildNestedWhereGroup([
             [$column, ($exclude ? '<' : '>='), $start, $this->boolean],
             [$column, ($exclude ? '>' : '<='), $end, $this->boolean],
-        ], null, null, $this->boolean);
+        ]);
+    }
+
+    protected function buildNestedWhereGroup(array $conditions)
+    {
+        // Laravel 11 adds a named boolean to array wheres; each condition here
+        // already owns its boolean, which can differ from the enclosing group.
+        return $this->builder->whereNested(function ($nested) use ($conditions) {
+            foreach ($conditions as $condition) {
+                $nested->where(...$condition);
+            }
+        }, $this->boolean);
     }
 
     protected function buildBasicQuery(QuerySymbol $query, ColumnRule $rule)

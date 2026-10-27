@@ -5,7 +5,12 @@ This fork starts at libre-accounting/laravel-search-string
 The original MIT license and authorship are retained in LICENSE.md.
 No Hoa implementation, namespace shim, or source code has been copied into the
 native implementation. Grammar.pp remains the language reference; AST classes,
-options, visitors, model trait, service provider and command APIs are unchanged.
+options, model trait, service provider and command APIs are unchanged.
+BuildColumnsVisitor uses explicit whereNested groups for date ranges and
+multi-column free text. Laravel 11 addArrayOfWheres adds a named boolean, which
+collides with these existing four-position conditions. The small adaptation is
+derived from the original MIT visitor and Laravel Query Builder API; it preserves
+inner and outer booleans and copies no application-specific implementation.
 
 The intended release is 1.5.0 (initial candidate 1.5.0-rc.1): a maintained compiler
 implementation is an additive maintenance capability, requiring a minor release.

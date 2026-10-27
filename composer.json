@@ -16,7 +16,7 @@
         "lorisleiva/laravel-search-string": "self.version"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.0",
+        "phpunit/phpunit": "^9.6|^10.5|^11.5.50",
         "orchestra/testbench": "^8.0|^9.0"
     },
     "autoload": {

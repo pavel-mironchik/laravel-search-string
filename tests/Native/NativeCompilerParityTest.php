@@ -10,12 +10,13 @@ use PHPUnit\Framework\TestCase;
 
 class NativeCompilerParityTest extends TestCase
 {
-    public function corpus(): array
+    public static function corpus(): array
     {
         return array_map(fn ($path) => [$path], glob(__DIR__.'/fixtures/*-0.old.json'));
     }
 
     /** @dataProvider corpus */
+    #[\PHPUnit\Framework\Attributes\DataProvider('corpus')]
     public function testBoundedLegacyCorpus(string $path): void
     {
         $this->assertCorpus($path);
